@@ -14,58 +14,58 @@ const seedData = () => {
     const insertProduct = db.prepare('INSERT INTO products (name, price, stock, image, description, category, rating, reviews) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
     
     insertProduct.run(
-        'Sony WH-1000XM5 Headphones', 
-        29999, 
-        5, 
-        'https://m.media-amazon.com/images/I/61vJtKbAssL._AC_SL1500_.jpg', 
-        'Industry-leading noise cancellation and premium audio quality.', 
-        'Electronics', 
-        4.9, 1240
-    );
-    insertProduct.run(
-        'Herman Miller Aeron Chair', 
-        124999, 
-        3, 
-        'https://m.media-amazon.com/images/I/71Yy8v622uL._AC_SL1500_.jpg', 
-        'The benchmark for ergonomic seating in the office.', 
-        'Furniture', 
-        4.8, 890
-    );
-    insertProduct.run(
-        'Keychron K2 Wireless Keyboard', 
-        8500, 
-        20, 
-        'https://m.media-amazon.com/images/I/61NlVxt09TL._AC_SL1500_.jpg', 
-        'A tactile mechanical keyboard with customizable RGB backlighting.', 
-        'Electronics', 
-        4.7, 510
-    );
-    insertProduct.run(
-        'Apple Watch Ultra 2', 
-        89900, 
-        8, 
-        'https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/watch-ultra2-titanium-ocean-blue-nc-cell-202309?wid=800&hei=800&fmt=jpeg', 
-        'The most rugged and capable Apple Watch ever.', 
+        'Fjallraven Foldsack Backpack', 
+        1499, 
+        25, 
+        'https://fakestoreapi.com/img/81fPKd-2AYL._AC_SL1500_t.png', 
+        'Your perfect pack for everyday use and walks in the forest.', 
         'Accessories', 
-        4.9, 2156
+        4.8, 120
     );
     insertProduct.run(
-        'DJI Mini 3 Pro Drone', 
-        85990, 
-        4, 
-        'https://m.media-amazon.com/images/I/61KqA-l6i4L._AC_SL1500_.jpg', 
-        'Sub-249g folding camera drone with 4K HDR video.', 
+        'Mens Casual Premium T-Shirt', 
+        699, 
+        50, 
+        'https://fakestoreapi.com/img/71-3HjGNDUL._AC_SY879._SX._UX._SY._UY_t.png', 
+        'Slim-fitting style, contrast raglan long sleeve, lightweight & soft fabric.', 
+        'Clothing', 
+        4.5, 89
+    );
+    insertProduct.run(
+        'Mens Cotton Jacket', 
+        2499, 
+        15, 
+        'https://fakestoreapi.com/img/71li-ujtlUL._AC_UX679_t.png', 
+        'Great outerwear jackets for Spring/Autumn/Winter, suitable for many occasions.', 
+        'Clothing', 
+        4.7, 51
+    );
+    insertProduct.run(
+        'Solid Gold Petite Micropave', 
+        5999, 
+        8, 
+        'https://fakestoreapi.com/img/61sbMiUnoGL._AC_UL640_QL65_ML3_t.png', 
+        'Satisfaction Guaranteed. Return or exchange any order within 30 days.', 
+        'Jewelery', 
+        4.9, 215
+    );
+    insertProduct.run(
+        'WD 2TB External Hard Drive', 
+        4599, 
+        40, 
+        'https://fakestoreapi.com/img/61IBBVJvSDL._AC_SY879_t.png', 
+        'USB 3.0 and USB 2.0 Compatibility. Fast data transfers.', 
         'Electronics', 
         4.8, 412
     );
     insertProduct.run(
-        'Ember Smart Coffee Mug', 
-        12999, 
-        15, 
-        'https://m.media-amazon.com/images/I/61x0x1R-q-L._AC_SL1500_.jpg', 
-        'Keeps your coffee hot exactly the way you like it.', 
-        'Home', 
-        4.5, 312
+        'Samsung 49-Inch Curved Monitor', 
+        29999, 
+        5, 
+        'https://fakestoreapi.com/img/81Zt42ioCgL._AC_SX679_t.png', 
+        '49 INCH SUPER ULTRAWIDE 32:9 CURVED GAMING MONITOR with dual 27 inch screen side by side.', 
+        'Electronics', 
+        4.6, 312
     );
 
     // Add some mock agent logs for the dashboard
@@ -75,7 +75,7 @@ const seedData = () => {
     insertLog.run(
         'sess_123',
         'idle_30s',
-        JSON.stringify({ cartValue: 29999, items: ['Sony WH-1000XM5 Headphones'] }),
+        JSON.stringify({ cartValue: 29999, items: ['Samsung 49-Inch Curved Monitor'] }),
         'User added high-ticket item but has been idle. Stock is low (5 left). A scarcity nudge is appropriate.',
         'nudge',
         JSON.stringify({ message: "Only 5 left in stock! Complete your order before they sell out." }),
@@ -86,10 +86,10 @@ const seedData = () => {
     insertLog.run(
         'sess_456',
         'checkout_hesitation_60s',
-        JSON.stringify({ cartValue: 89900, items: ['Apple Watch Ultra 2'] }),
-        'User reached checkout but hesitated for 60s. Cart value is extremely high. Offering a 5% discount to secure the sale.',
+        JSON.stringify({ cartValue: 4599, items: ['WD 2TB External Hard Drive'] }),
+        'User reached checkout but hesitated for 60s. Offering a 5% discount to secure the sale.',
         'discount',
-        JSON.stringify({ code: "PREMIUM5", percentage: 5, message: "We noticed you're thinking about it. Here's 5% off!" }),
+        JSON.stringify({ code: "SAVE5", percentage: 5, message: "We noticed you're thinking about it. Here's 5% off!" }),
         new Date(Date.now() - 1800000).toISOString()
     );
 
