@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { CreditCard, ShieldCheck, ArrowRight, ShoppingCart, Sparkles, Smartphone, Building2, Trash2 } from 'lucide-react';
+import { CreditCard, ShieldCheck, ArrowRight, ShoppingCart, Sparkles, Smartphone, Building2, Trash2, CheckCircle, X } from 'lucide-react';
 
 const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
   const [hesitationTriggered, setHesitationTriggered] = useState(false);
@@ -31,34 +31,49 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
     return () => clearTimeout(timer);
   }, [cart, total, sessionId, hesitationTriggered]);
 
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState('processing'); // 'processing' | 'success' | 'failed'
+
   const handlePayment = async () => {
     try {
+      setShowPaymentModal(true);
+      setPaymentStatus('processing');
       const finalTotal = total - discountAmount;
       const res = await axios.post('http://localhost:5000/api/checkout', { amount: finalTotal });
       
       if (res.data.mock) {
-        alert("Payment Successful (Mock Mode)");
-        setCart([]);
+        setTimeout(() => {
+          setPaymentStatus('success');
+          setTimeout(() => {
+            setShowPaymentModal(false);
+            setCart([]);
+          }, 3000);
+        }, 1500);
       } else {
         const options = {
-          key: "rzp_test_dummy",
+          key: res.data.key_id,
           amount: res.data.amount,
           currency: res.data.currency,
           name: "CheckoutMind Premium",
           description: "Test Transaction",
           order_id: res.data.id,
           handler: function (response) {
-            alert("Payment Successful! ID: " + response.razorpay_payment_id);
-            setCart([]);
+            setPaymentStatus('success');
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setCart([]);
+            }, 3000);
           },
           theme: { color: "#d946ef" }
         };
         const rzp = new window.Razorpay(options);
         rzp.open();
+        setShowPaymentModal(false);
       }
     } catch (err) {
       console.error(err);
-      alert("Payment failed");
+      setPaymentStatus('failed');
+      setTimeout(() => setShowPaymentModal(false), 2000);
     }
   };
 
@@ -78,7 +93,39 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 animate-fade-in-up">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative animate-fade-in-up">
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark-900/90 backdrop-blur-sm">
+          <div className="bg-dark-800 border border-white/10 rounded-3xl p-8 max-w-sm w-full flex flex-col items-center shadow-[0_0_50px_rgba(217,70,239,0.3)]">
+            {paymentStatus === 'processing' && (
+              <>
+                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-brand-500 border-opacity-50 mb-6"></div>
+                <h3 className="text-xl font-bold text-white mb-2">Processing Payment</h3>
+                <p className="text-gray-400 text-sm text-center">Securely connecting to Razorpay... Please do not close this window.</p>
+              </>
+            )}
+            {paymentStatus === 'success' && (
+              <>
+                <div className="h-16 w-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+                  <CheckCircle size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Payment Successful!</h3>
+                <p className="text-gray-400 text-sm text-center">Your mock order has been placed successfully. Thank you for testing CheckoutMind!</p>
+              </>
+            )}
+            {paymentStatus === 'failed' && (
+              <>
+                <div className="h-16 w-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(239,68,68,0.4)]">
+                  <X size={32} />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Payment Failed</h3>
+                <p className="text-gray-400 text-sm text-center">Something went wrong while processing your request.</p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="text-center mb-12">
         <h1 className="text-4xl font-extrabold text-white mb-4">Complete Your Order</h1>
         <p className="text-gray-400">You're just one step away from premium quality.</p>

@@ -56,13 +56,13 @@ app.post('/api/checkout', async (req, res) => {
     const { amount, currency = 'INR' } = req.body;
     
     try {
-        if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID !== 'your_razorpay_key_id') {
+        if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID !== 'your_razorpay_key_id_here') {
             const order = await razorpay.orders.create({
                 amount: amount * 100, // in paise
                 currency,
                 receipt: 'receipt_' + Math.random().toString(36).substring(7),
             });
-            res.json(order);
+            res.json({ ...order, key_id: process.env.RAZORPAY_KEY_ID });
         } else {
             // Mock response if no real keys
             res.json({
