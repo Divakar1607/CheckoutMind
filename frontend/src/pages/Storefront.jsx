@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { ShoppingCart, Star, TrendingUp, Filter, Search, Eye, X, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Star, TrendingUp, Filter, Search, Eye, X, CheckCircle, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const Storefront = ({ addToCart }) => {
+const Storefront = ({ addToCart, wishlist = [], toggleWishlist }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
@@ -152,16 +153,21 @@ const Storefront = ({ addToCart }) => {
               
               {/* Image Container with White Background for Real Products */}
               <div className="w-full h-64 bg-white relative flex items-center justify-center p-6">
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
-                />
+                <Link to={`/product/${product.id}`} className="block w-full h-full">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 mix-blend-multiply"
+                  />
+                </Link>
                 
                 {/* Overlay actions */}
-                <div className="absolute inset-0 bg-dark-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                  <button onClick={() => setQuickViewProduct(product)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full p-3 transform scale-75 group-hover:scale-100 transition-all duration-300 shadow-xl">
+                <div className="absolute inset-0 bg-dark-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px] pointer-events-none">
+                  <button onClick={() => setQuickViewProduct(product)} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full p-3 transform scale-75 group-hover:scale-100 transition-all duration-300 shadow-xl pointer-events-auto mx-2">
                     <Eye size={24} />
+                  </button>
+                  <button onClick={(e) => { e.preventDefault(); toggleWishlist(product.id); }} className="bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/30 text-white rounded-full p-3 transform scale-75 group-hover:scale-100 transition-all duration-300 shadow-xl pointer-events-auto mx-2">
+                    <Heart size={24} className={wishlist?.includes(product.id) ? "text-fuchsia-500 fill-fuchsia-500" : ""} />
                   </button>
                 </div>
 
@@ -188,9 +194,11 @@ const Storefront = ({ addToCart }) => {
                   </div>
                 </div>
                 
-                <h3 className="text-xl font-bold text-white mb-2 leading-tight">
-                  {product.name}
-                </h3>
+                <Link to={`/product/${product.id}`} className="hover:text-brand-400 transition-colors">
+                  <h3 className="text-xl font-bold text-white mb-2 leading-tight">
+                    {product.name}
+                  </h3>
+                </Link>
                 <p className="text-sm text-gray-400 line-clamp-2 mb-6">
                   {product.description}
                 </p>

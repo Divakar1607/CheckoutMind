@@ -33,6 +33,7 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState('processing'); // 'processing' | 'success' | 'failed'
+  const [upsellMessage, setUpsellMessage] = useState(null);
 
   const handlePayment = async () => {
     try {
@@ -44,10 +45,22 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
       if (res.data.mock) {
         setTimeout(() => {
           setPaymentStatus('success');
+          
+          axios.post('http://localhost:5000/api/agent/event', {
+            sessionId,
+            eventType: 'post_purchase',
+            context: { cartItems: cart.map(i => i.name) }
+          }).then(eventRes => {
+            if (eventRes.data.action_type === 'upsell_suggestion') {
+              setUpsellMessage(eventRes.data.action_payload.message);
+            }
+          });
+
           setTimeout(() => {
             setShowPaymentModal(false);
             setCart([]);
-          }, 3000);
+            setUpsellMessage(null);
+          }, 8000);
         }, 1500);
       } else {
         const options = {
@@ -59,10 +72,22 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
           order_id: res.data.id,
           handler: function (response) {
             setPaymentStatus('success');
+            
+            axios.post('http://localhost:5000/api/agent/event', {
+              sessionId,
+              eventType: 'post_purchase',
+              context: { cartItems: cart.map(i => i.name) }
+            }).then(eventRes => {
+              if (eventRes.data.action_type === 'upsell_suggestion') {
+                setUpsellMessage(eventRes.data.action_payload.message);
+              }
+            });
+
             setTimeout(() => {
               setShowPaymentModal(false);
               setCart([]);
-            }, 3000);
+              setUpsellMessage(null);
+            }, 8000);
           },
           theme: { color: "#d946ef" }
         };
@@ -110,7 +135,16 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
                   <CheckCircle size={32} />
                 </div>
                 <h3 className="text-xl font-bold text-white mb-2">Payment Successful!</h3>
-                <p className="text-gray-400 text-sm text-center">Your mock order has been placed successfully. Thank you for testing CheckoutMind!</p>
+                <p className="text-gray-400 text-sm text-center mb-4">Your mock order has been placed successfully. Thank you for testing CheckoutMind!</p>
+                {upsellMessage && (
+                  <div className="mt-4 p-4 bg-brand-500/20 border border-brand-500/50 rounded-xl flex items-start gap-3 w-full">
+                    <Sparkles className="text-brand-400 mt-1 flex-shrink-0" size={20} />
+                    <div>
+                      <h4 className="font-bold text-brand-300 text-sm">Agent Suggestion</h4>
+                      <p className="text-xs text-brand-100 mt-1">{upsellMessage}</p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
             {paymentStatus === 'failed' && (

@@ -89,10 +89,10 @@ app.post('/api/agent/event', async (req, res) => {
         configs.forEach(c => guardrails[c.key] = c.value);
 
         // System prompt for the agent
-        const systemPrompt = `You are CheckoutMind, an autonomous AI agent integrated into an e-commerce checkout flow. 
-Your goal is to increase conversions, reduce cart abandonment, and maximize revenue.
-You receive events about user behavior (e.g., idle on product page, checkout hesitation, cart abandonment).
-You must decide whether to take an action (nudge, discount, email), and provide your reasoning.
+        const systemPrompt = `You are CheckoutMind, an autonomous AI agent integrated into an e-commerce platform.
+Your goal is to increase conversions, reduce cart abandonment, and maximize revenue while providing excellent user experience.
+You receive events about user behavior (e.g., idle on product page, checkout hesitation, product_qa, wishlist_check, post_purchase).
+You must decide whether to take an action, and provide your reasoning.
 
 Current Guardrails set by the store owner:
 - Max discount allowed: ${guardrails.max_discount_percentage}%
@@ -101,10 +101,10 @@ Current Guardrails set by the store owner:
 
 You must respond in valid JSON format with the following structure:
 {
-    "reasoning": "Detailed explanation of why you are taking this action based on context and guardrails.",
-    "action_type": "none" | "nudge" | "discount" | "email",
+    "reasoning": "Detailed explanation of why you are taking this action.",
+    "action_type": "none" | "nudge" | "discount" | "email" | "qa_answer" | "wishlist_alert" | "upsell_suggestion",
     "action_payload": {
-        "message": "The message to display or send",
+        "message": "The message to display or send (or the answer to the QA, or the upsell suggestion)",
         "discount_percentage": 10 // only if action_type is discount
     }
 }
@@ -153,6 +153,24 @@ Do not include any other text besides the JSON.`;
                     reasoning: `User is hesitating at checkout. Cart value is high. I will offer a ${Math.min(10, parseInt(guardrails.max_discount_percentage))}% discount.`,
                     action_type: "discount",
                     action_payload: { message: `Complete your purchase now for a discount!`, discount_percentage: Math.min(10, parseInt(guardrails.max_discount_percentage)) }
+                };
+            } else if (eventType === 'product_qa') {
+                agentDecision = {
+                    reasoning: `User asked a question about ${context.productName}.`,
+                    action_type: "qa_answer",
+                    action_payload: { message: `Based on the product details, this item is highly recommended for its quality and durability. Let me know if you need more details!` }
+                };
+            } else if (eventType === 'wishlist_check') {
+                agentDecision = {
+                    reasoning: `User checked their wishlist. Simulating a stock alert for engagement.`,
+                    action_type: "wishlist_alert",
+                    action_payload: { message: `One of your wishlisted items is running low on stock! Grab it before it's gone.` }
+                };
+            } else if (eventType === 'post_purchase') {
+                agentDecision = {
+                    reasoning: `User completed a purchase. Suggesting a complementary item to increase customer lifetime value.`,
+                    action_type: "upsell_suggestion",
+                    action_payload: { message: `Thanks for your purchase! We think you'll also love this related product to go with your new order.` }
                 };
             } else {
                 agentDecision = { reasoning: "No action needed.", action_type: "none", action_payload: {} };

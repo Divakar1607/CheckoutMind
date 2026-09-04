@@ -4,7 +4,9 @@ import Storefront from './pages/Storefront';
 import Checkout from './pages/Checkout';
 import Dashboard from './pages/Dashboard';
 import ConfigPanel from './pages/ConfigPanel';
-import { ShoppingCart, LayoutDashboard, Settings, Sparkles } from 'lucide-react';
+import ProductDetail from './pages/ProductDetail';
+import Wishlist from './pages/Wishlist';
+import { ShoppingCart, LayoutDashboard, Settings, Sparkles, Heart } from 'lucide-react';
 import AgentPopup from './components/AgentPopup';
 
 const NavLink = ({ to, icon: Icon, children }) => {
@@ -51,6 +53,7 @@ function CustomCursor() {
 
 function AppContent() {
   const [cart, setCart] = useState([]);
+  const [wishlist, setWishlist] = useState([]);
   const [sessionId, setSessionId] = useState('');
 
   useEffect(() => {
@@ -76,6 +79,12 @@ function AppContent() {
     setCart(prev => prev.filter(item => item.id !== productId));
   };
 
+  const toggleWishlist = (productId) => {
+    setWishlist(prev => 
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
+    );
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-dark-900 text-gray-100 cursor-none">
       <CustomCursor />
@@ -92,6 +101,7 @@ function AppContent() {
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <NavLink to="/" icon={ShoppingCart}>Store</NavLink>
+              <NavLink to="/wishlist" icon={Heart}>Wishlist</NavLink>
               <NavLink to="/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
               <NavLink to="/config" icon={Settings}>Config</NavLink>
               
@@ -116,7 +126,9 @@ function AppContent() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-900/20 blur-[120px] rounded-full pointer-events-none -z-10"></div>
         
         <Routes>
-          <Route path="/" element={<Storefront addToCart={addToCart} />} />
+          <Route path="/" element={<Storefront addToCart={addToCart} wishlist={wishlist} toggleWishlist={toggleWishlist} />} />
+          <Route path="/product/:id" element={<ProductDetail addToCart={addToCart} wishlist={wishlist} toggleWishlist={toggleWishlist} sessionId={sessionId} />} />
+          <Route path="/wishlist" element={<Wishlist wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} sessionId={sessionId} />} />
           <Route path="/checkout" element={<Checkout cart={cart} total={cartTotal} sessionId={sessionId} setCart={setCart} removeFromCart={removeFromCart} />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/config" element={<ConfigPanel />} />
