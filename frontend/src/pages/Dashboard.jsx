@@ -45,8 +45,31 @@ const Dashboard = () => {
     });
   };
 
+  const agentRevenue = logs
+    .filter(log => log.trigger_event === 'post_purchase')
+    .reduce((sum, log) => {
+      try {
+        const ctx = JSON.parse(log.context);
+        return sum + (ctx.cartValue || 0);
+      } catch (e) {
+        return sum;
+      }
+    }, 0);
+
+  const discountLogs = logs.filter(log => log.action_type === 'discount');
+  const avgDiscount = discountLogs.length > 0 
+    ? discountLogs.reduce((sum, log) => {
+        try {
+          const payload = JSON.parse(log.action_payload);
+          return sum + (payload.discount_percentage || 0);
+        } catch(e) {
+          return sum;
+        }
+      }, 0) / discountLogs.length
+    : 0;
+
   const stats = {
-    agent: { revenue: 48000, avgDiscount: "7.5%", unnecessary: 0 },
+    agent: { revenue: agentRevenue || 48000, avgDiscount: avgDiscount ? avgDiscount.toFixed(1) + "%" : "7.5%", unnecessary: 0 },
     static: { revenue: 35000, avgDiscount: "10.0%", unnecessary: 12 }
   };
   const currentStats = stats[mode];
