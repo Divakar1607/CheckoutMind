@@ -26,7 +26,7 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
           }
         });
       }
-    }, 10000); // 10s for demo
+    }, 60000); // 60s for demo
 
     return () => clearTimeout(timer);
   }, [cart, total, sessionId, hesitationTriggered]);
@@ -49,7 +49,7 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
           axios.post('http://localhost:5000/api/agent/event', {
             sessionId,
             eventType: 'post_purchase',
-            context: { cartItems: cart.map(i => i.name) }
+            context: { cartItems: cart.map(i => i.name), cartValue: finalTotal }
           }).then(eventRes => {
             if (eventRes.data.action_type === 'upsell_suggestion') {
               setUpsellMessage(eventRes.data.action_payload.message);
@@ -76,7 +76,7 @@ const Checkout = ({ cart, total, sessionId, setCart, removeFromCart }) => {
             axios.post('http://localhost:5000/api/agent/event', {
               sessionId,
               eventType: 'post_purchase',
-              context: { cartItems: cart.map(i => i.name) }
+              context: { cartItems: cart.map(i => i.name), cartValue: res.data.amount / 100 }
             }).then(eventRes => {
               if (eventRes.data.action_type === 'upsell_suggestion') {
                 setUpsellMessage(eventRes.data.action_payload.message);
