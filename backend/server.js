@@ -88,8 +88,7 @@ app.post('/api/agent/event', async (req, res) => {
         const guardrails = {};
         configs.forEach(c => guardrails[c.key] = c.value);
 
-        // System prompt for the agent
-        const systemPrompt = `You are CheckoutMind, an autonomous AI agent integrated into an e-commerce platform.
+        const baseSystemPrompt = `You are CheckoutMind, an autonomous AI agent integrated into an e-commerce platform.
 Your goal is to increase conversions, reduce cart abandonment, and maximize revenue while providing excellent user experience.
 You receive events about user behavior (e.g., idle on product page, checkout hesitation, product_qa, wishlist_check, post_purchase).
 You must decide whether to take an action, and provide your reasoning.
@@ -99,7 +98,7 @@ Current Guardrails set by the store owner:
 - Agent Tone: ${guardrails.agent_tone}
 - Enabled for abandonment: ${guardrails.enabled_for_abandonment}
 
-You must respond in valid JSON format with the following structure:
+You must respond in strictly valid JSON format with the following structure:
 {
     "reasoning": "Detailed explanation of why you are taking this action.",
     "action_type": "none" | "nudge" | "discount" | "email" | "qa_answer" | "wishlist_alert" | "upsell_suggestion",
@@ -108,36 +107,49 @@ You must respond in valid JSON format with the following structure:
         "discount_percentage": 10 // only if action_type is discount
     }
 }
-Do not include any other text besides the JSON.`;
+IMPORTANT: Output ONLY valid JSON. Do not include markdown code blocks (\`\`\`json), greetings, or any other text before or after the JSON.`;
 
         let userPrompt = `Event: ${eventType}\nContext: ${JSON.stringify(context)}`;
-
         let agentDecision = null;
 
         // Call Claude if we have a real key, otherwise mock it for demo if key is missing/dummy
-        if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_api_key') {
-            const message = await anthropic.messages.create({
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 1024,
-                system: systemPrompt,
-                messages: [
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.7
-            });
+        if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_API_KEY !== 'your_anthropic_api_key' && process.env.ANTHROPIC_API_KEY !== 'dummy_key') {
             
+            const callClaude = async (systemPrompt) => {
+                const message = await anthropic.messages.create({
+                    model: 'claude-3-5-sonnet-20240620',
+                    max_tokens: 1024,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: userPrompt }],
+                    temperature: 0.7
+                });
+                return message.content[0].text;
+            };
+
+            let responseText = await callClaude(baseSystemPrompt);
+            console.log("Raw Claude Response:", responseText);
+
             try {
-                // Extract JSON from response
-                const responseText = message.content[0].text;
-                const jsonStr = responseText.substring(responseText.indexOf('{'), responseText.lastIndexOf('}') + 1);
+                // Try to parse the raw text
+                let jsonStr = responseText.substring(responseText.indexOf('{'), responseText.lastIndexOf('}') + 1);
                 agentDecision = JSON.parse(jsonStr);
             } catch (e) {
-                console.error("Failed to parse Claude response as JSON", e);
-                agentDecision = {
-                    reasoning: "Failed to parse AI response. Fallback to default action.",
-                    action_type: "none",
-                    action_payload: {}
-                };
+                console.warn("Failed to parse Claude response as JSON on first attempt. Retrying...");
+                const retrySystemPrompt = baseSystemPrompt + "\n\nYOUR PREVIOUS RESPONSE WAS INVALID JSON. YOU MUST RESPOND WITH ONLY A VALID JSON OBJECT AND NO OTHER TEXT.";
+                
+                try {
+                    responseText = await callClaude(retrySystemPrompt);
+                    console.log("Raw Claude Response (Retry):", responseText);
+                    let jsonStr = responseText.substring(responseText.indexOf('{'), responseText.lastIndexOf('}') + 1);
+                    agentDecision = JSON.parse(jsonStr);
+                } catch (e2) {
+                    console.error("Failed to parse Claude response as JSON on retry", e2);
+                    agentDecision = {
+                        reasoning: "Failed to parse AI response twice. Fallback to default action.",
+                        action_type: "none",
+                        action_payload: {}
+                    };
+                }
             }
         } else {
             // Mock reasoning if no API key
