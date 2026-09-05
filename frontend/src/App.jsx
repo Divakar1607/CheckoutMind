@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Storefront from './pages/Storefront';
 import Checkout from './pages/Checkout';
 import Dashboard from './pages/Dashboard';
@@ -62,6 +63,44 @@ function AppContent() {
     }
     setSessionId(localStorage.getItem('sessionId'));
   }, []);
+
+  const [idleTriggered, setIdleTriggered] = useState(false);
+
+  useEffect(() => {
+    if (cart.length === 0) return;
+
+    let timeout;
+    const resetTimer = () => {
+      clearTimeout(timeout);
+      if (!idleTriggered) {
+        timeout = setTimeout(() => {
+          setIdleTriggered(true);
+          axios.post('http://localhost:5000/api/agent/event', {
+            sessionId,
+            eventType: 'idle_30s',
+            context: { cartValue: cartTotal, items: cart.map(i => i.name) }
+          }).then(res => {
+            window.dispatchEvent(new CustomEvent('agent-action', { detail: res.data }));
+          }).catch(console.error);
+        }, 30000);
+      }
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
+    window.addEventListener('scroll', resetTimer);
+    window.addEventListener('click', resetTimer);
+    
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
+      window.removeEventListener('scroll', resetTimer);
+      window.removeEventListener('click', resetTimer);
+    };
+  }, [cart, sessionId, idleTriggered]);
 
   const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
 
